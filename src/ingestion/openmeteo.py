@@ -2,6 +2,7 @@ import httpx
 from loguru import logger
 from tenacity import retry, stop_after_attempt, wait_exponential
 from src.config import settings
+import time
 
 COORDENADAS = {
     # Sul
@@ -104,6 +105,7 @@ def coletar_clima_todos(
                 data_fim=data_fim,
             )
             todos.extend(dados)
+            time.sleep(1)
         except Exception as e:
             logger.error(f"Erro em {municipio}: {e}")
     logger.info(f"Total clima: {len(todos)} registros")
