@@ -1,0 +1,28 @@
+[project]
+name = "modern-data-stack"
+version = "0.1.0"
+description = "Dashboard Nacional de Arboviroses — Modern Data Stack"
+requires-python = ">=3.12"
+dependencies = [
+    "requests>=2.32.0",
+    "pandas>=2.2.0",
+    "polars>=0.20.0",
+    "duckdb>=0.10.0",
+    "pydantic>=2.7.0",
+    "pydantic-settings>=2.3.0",
+    "loguru>=0.7.0",
+    "python-dotenv>=1.0.0",
+    "pytest>=8.0.0",
+    "pytest-cov>=5.0.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]

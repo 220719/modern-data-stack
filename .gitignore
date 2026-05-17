@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+*.egg
+
+# Virtual environment
+.venv/
+venv/
+
+# uv
+.uv/
+
+# Environment variables
+.env
+*.env
+
+# Data
+data/raw/
+data/processed/
+data/models/
+*.csv
+*.parquet
+*.db
+*.duckdb
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# VS Code
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+*.log
+
+# MLflow
+mlruns/
+mlartifacts/
+
+# MinIO
+minio_data/
