@@ -508,4 +508,66 @@ with st.container():
                 st.error(f"Erro na previsão: {e}")
 
 st.markdown("---")
+
+# ── CHAT RAG ─────────────────────────────────────────────
+st.markdown("---")
+st.subheader("💬 Assistente Epidemiológico — RAG + Llama 3")
+st.markdown("Faça perguntas em linguagem natural sobre os dados de arboviroses.")
+
+# Sugestões de perguntas
+st.markdown("**💡 Exemplos de perguntas:**")
+col_s1, col_s2, col_s3 = st.columns(3)
+with col_s1:
+    if st.button("🔴 Quais municípios estão em epidemia?"):
+        st.session_state.pergunta_rag = "Quais municípios estão em nível de epidemia de dengue?"
+with col_s2:
+    if st.button("📊 Compare dengue 2024 vs 2023 em Maringá"):
+        st.session_state.pergunta_rag = "Compare os casos de dengue em 2024 versus 2023 em Maringá"
+with col_s3:
+    if st.button("🌡️ Clima e dengue em Fortaleza"):
+        st.session_state.pergunta_rag = "Qual a relação entre temperatura e casos de dengue em Fortaleza?"
+
+pergunta = st.text_input(
+    "Digite sua pergunta:",
+    value=st.session_state.get("pergunta_rag", ""),
+    placeholder="Ex: Qual município tem mais casos de chikungunya em 2025?",
+    key="input_rag"
+)
+
+if st.button("🔍 Perguntar", type="primary") and pergunta:
+    with st.spinner("🤖 Consultando dados e gerando resposta..."):
+        try:
+            from src.rag.chat import responder_stream
+            resposta_container = st.empty()
+            resposta_completa = ""
+            for chunk in responder_stream(pergunta):
+                resposta_completa += chunk
+                resposta_container.markdown(f"""
+                <div style="
+                    background:#f8f9fa;
+                    border-left:4px solid #e67e22;
+                    padding:1rem 1.2rem;
+                    border-radius:8px;
+                    font-size:0.95rem;
+                    line-height:1.6;
+                ">
+                🤖 {resposta_completa}▌
+                </div>
+                """, unsafe_allow_html=True)
+            resposta_container.markdown(f"""
+            <div style="
+                background:#f8f9fa;
+                border-left:4px solid #e67e22;
+                padding:1rem 1.2rem;
+                border-radius:8px;
+                font-size:0.95rem;
+                line-height:1.6;
+            ">
+            🤖 {resposta_completa}
+            </div>
+            """, unsafe_allow_html=True)
+            st.caption("Resposta gerada por Llama 3 com base nos dados reais do InfoDengue")
+        except Exception as e:
+            st.error(f"Erro: {e}")
+            
 st.caption("Dados: InfoDengue (Fiocruz) + OpenMeteo | Modelos: Random Forest · dbt · MLflow · FastAPI · Streamlit")
