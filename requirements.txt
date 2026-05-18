@@ -26,6 +26,7 @@ annotated-types==0.7.0
     # via pydantic
 anyio==4.13.0
     # via
+    #   groq
     #   httpx
     #   starlette
     #   streamlit
@@ -127,6 +128,8 @@ dbt-semantic-interfaces==0.9.0
     # via dbt-core
 deepdiff==8.6.2
     # via dbt-common
+distro==1.9.0
+    # via groq
 docker==7.1.0
     # via mlflow
 duckdb==1.5.2
@@ -178,6 +181,8 @@ graphql-relay==3.2.0
     # via graphene
 greenlet==3.5.0 ; platform_machine == 'AMD64' or platform_machine == 'WIN32' or platform_machine == 'aarch64' or platform_machine == 'amd64' or platform_machine == 'ppc64le' or platform_machine == 'win32' or platform_machine == 'x86_64'
     # via sqlalchemy
+groq==0.37.1
+    # via langchain-groq
 grpcio==1.80.0
     # via
     #   chromadb
@@ -199,6 +204,7 @@ httptools==0.7.1
 httpx==0.28.1
     # via
     #   chromadb
+    #   groq
     #   huggingface-hub
     #   langgraph-sdk
     #   langsmith
@@ -272,11 +278,13 @@ langchain-core==1.4.0
     #   langchain
     #   langchain-classic
     #   langchain-community
+    #   langchain-groq
     #   langchain-ollama
     #   langchain-text-splitters
     #   langgraph
     #   langgraph-checkpoint
     #   langgraph-prebuilt
+langchain-groq==1.1.2
 langchain-ollama==1.1.0
 langchain-protocol==0.0.15
     # via langchain-core
@@ -479,6 +487,7 @@ pydantic==2.13.4
     #   dbt-core
     #   dbt-semantic-interfaces
     #   fastapi
+    #   groq
     #   langchain
     #   langchain-classic
     #   langchain-core
@@ -599,6 +608,8 @@ skops==0.14.0
     # via mlflow
 smmap==5.0.3
     # via gitdb
+sniffio==1.3.1
+    # via groq
 snowplow-tracker==1.1.0
     # via dbt-core
 sqlalchemy==2.0.49
@@ -655,6 +666,7 @@ typing-extensions==4.15.0
     #   dbt-semantic-interfaces
     #   fastapi
     #   graphene
+    #   groq
     #   grpcio
     #   huggingface-hub
     #   langchain-core
