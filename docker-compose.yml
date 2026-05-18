@@ -64,5 +64,23 @@ services:
     command: server /data --console-address ":9001"
     restart: unless-stopped
 
+  airflow:
+    image: apache/airflow:2.9.3-python3.12
+    container_name: arboviroses-airflow
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./infra/airflow/dags:/opt/airflow/dags
+      - ./data:/opt/airflow/data
+      - ./src:/opt/airflow/src
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=SequentialExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=sqlite:////opt/airflow/airflow.db
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW__WEBSERVER__SECRET_KEY=arboviroses2025
+      - DUCKDB_PATH=/opt/airflow/data/processed/arboviroses.duckdb
+    command: bash -c "airflow db init && airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@arboviroses.br ; airflow webserver & airflow scheduler"
+    restart: unless-stopped
+
 volumes:
   minio_data:
