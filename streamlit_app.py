@@ -421,6 +421,39 @@ if st.button("🔮 Gerar Previsão", type="primary", use_container_width=True):
 
 st.markdown("---")
 
+# ── ALERTAS ──────────────────────────────────────────────
+st.markdown("---")
+st.subheader("⚡ Alertas Epidemiológicos")
+
+if not df_atual.empty:
+    df_alertas_show = df_atual[df_atual["nivel_alerta"] >= 3].sort_values(
+        ["nivel_alerta", "casos_estimados"], ascending=[False, False]
+    )
+
+    if df_alertas_show.empty:
+        st.success("✅ Nenhum município em nível de alerta elevado no momento.")
+    else:
+        for _, row in df_alertas_show.iterrows():
+            nivel = int(row["nivel_alerta"])
+            cor   = CORES_NIVEL.get(nivel, "#95a5a6")
+            emoji = {3: "🟠", 4: "🔴"}.get(nivel, "⚪")
+            st.markdown(f"""
+            <div style="
+                background:{cor}15;
+                border-left:4px solid {cor};
+                padding:0.6rem 1rem;
+                border-radius:6px;
+                margin-bottom:0.5rem;
+                font-size:0.9rem;
+            ">
+                {emoji} <b>{row['municipio']}</b> / {doenca_sel.capitalize()} —
+                Nível {nivel} ({LABELS_NIVEL[nivel]}) —
+                <b>{int(row['casos_estimados']):,} casos</b>
+            </div>
+            """, unsafe_allow_html=True)
+else:
+    st.info("Selecione uma doença e ano para ver os alertas.")
+
 # ── CHAT RAG COM GROQ ────────────────────────────────────
 st.subheader("💬 Assistente Epidemiológico — RAG + Llama 3 (Groq)")
 st.markdown("Perguntas em linguagem natural sobre os dados de arboviroses.")
