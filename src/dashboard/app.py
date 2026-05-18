@@ -509,6 +509,50 @@ with st.container():
 
 st.markdown("---")
 
+# ── PAINEL KAFKA ─────────────────────────────────────────
+st.markdown("---")
+st.subheader("⚡ Alertas em Tempo Real — Kafka")
+
+col_k1, col_k2 = st.columns([1, 3])
+
+with col_k1:
+    if st.button("🔄 Atualizar alertas", type="primary"):
+        try:
+            from src.streaming.producer import publicar_alertas
+            from src.streaming.consumer import consumir_alertas
+            n = publicar_alertas()
+            alertas = consumir_alertas()
+            st.session_state.kafka_alertas = alertas
+            st.success(f"{n} alertas publicados e consumidos!")
+        except Exception as e:
+            st.error(f"Erro Kafka: {e}")
+
+with col_k2:
+    alertas = st.session_state.get("kafka_alertas", [])
+    if alertas:
+        for alerta in alertas:
+            nivel = alerta["nivel_alerta"]
+            cor   = {1:"#27ae60", 2:"#f39c12", 3:"#e67e22", 4:"#c0392b"}.get(nivel, "#95a5a6")
+            emoji = {1:"🟢", 2:"🟡", 3:"🟠", 4:"🔴"}.get(nivel, "⚪")
+            st.markdown(f"""
+            <div style="
+                background:{cor}15;
+                border-left:4px solid {cor};
+                padding:0.6rem 1rem;
+                border-radius:6px;
+                margin-bottom:0.5rem;
+                font-size:0.9rem;
+            ">
+                {emoji} <b>{alerta['municipio']}</b> / {alerta['doenca'].capitalize()} —
+                Nível {nivel} ({alerta['nivel_texto']}) —
+                <b>{alerta['casos']:,} casos</b> —
+                Média 4s: {alerta['media_movel_4s']:,}
+                <span style="color:#999; font-size:0.8rem; float:right">{alerta['timestamp'][:19]}</span>
+            </div>
+            """, unsafe_allow_html=True)
+    else:
+        st.info("Clique em 'Atualizar alertas' para buscar eventos do Kafka")
+
 # ── CHAT RAG ─────────────────────────────────────────────
 st.markdown("---")
 st.subheader("💬 Assistente Epidemiológico — RAG + Llama 3")

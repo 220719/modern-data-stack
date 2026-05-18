@@ -41,13 +41,7 @@ services:
       - "5000:5000"
     volumes:
       - ./mlruns:/mlruns
-    command: >
-      bash -c "pip install mlflow -q &&
-               mlflow server
-               --host 0.0.0.0
-               --port 5000
-               --backend-store-uri sqlite:///mlruns/mlflow.db
-               --default-artifact-root /mlruns"
+    command: bash -c "pip install mlflow -q && mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri sqlite:///mlruns/mlflow.db --default-artifact-root /mlruns"
     restart: unless-stopped
 
   minio:
@@ -80,6 +74,29 @@ services:
       - AIRFLOW__WEBSERVER__SECRET_KEY=arboviroses2025
       - DUCKDB_PATH=/opt/airflow/data/processed/arboviroses.duckdb
     command: bash -c "airflow db init && airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@arboviroses.br ; airflow webserver & airflow scheduler"
+    restart: unless-stopped
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: arboviroses-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    restart: unless-stopped
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: arboviroses-kafka
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
     restart: unless-stopped
 
 volumes:
