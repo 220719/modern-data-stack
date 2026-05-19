@@ -547,6 +547,18 @@ if st.button("🔮 Gerar Previsão Automática", type="primary", use_container_w
         nivel    = 1 if previsao < 50 else 2 if previsao < 200 else 3 if previsao < 500 else 4
 
         st.markdown("**📈 Histórico + Projeção:**")
+
+        # Calcula projeção 4 semanas
+        l1_p, l2_p, l4_p, mm_p = l1, l2, l4, mm
+        projecoes = []
+        for s in range(1, 5):
+            p = int(modelo.predict(pd.DataFrame([{"lag1": l1_p, "lag2": l2_p, "lag4": l4_p, "mm4": mm_p}]))[0])
+            nivel_s = 1 if p < 50 else 2 if p < 200 else 3 if p < 500 else 4
+            cor_s   = CORES_NIVEL[nivel_s]
+            projecoes.append({"Semana": f"+{s}s", "Casos": p, "Nivel": LABELS_NIVEL[nivel_s], "cor": cor_s})
+            l4_p, l2_p, l1_p = l2_p, l1_p, p
+            mm_p = (mm_p * 3 + p) / 4
+        df_proj = pd.DataFrame(projecoes)
         df_recente = df_mod.tail(26).copy()
         datas_hist = pd.date_range(end=pd.Timestamp.now(), periods=len(df_recente), freq="W")
         datas_prev = pd.date_range(start=datas_hist[-1] + pd.Timedelta(weeks=1), periods=4, freq="W")
