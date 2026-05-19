@@ -546,49 +546,6 @@ if st.button("🔮 Gerar Previsão Automática", type="primary", use_container_w
         previsao = int(modelo.predict(inp)[0])
         nivel    = 1 if previsao < 50 else 2 if previsao < 200 else 3 if previsao < 500 else 4
 
-        cp1, cp2, cp3, cp4 = st.columns(4)
-        cp1.metric("🔮 Próxima semana",   f"{previsao:,} casos")
-        cp2.metric("📊 Nível estimado",   LABELS_NIVEL[nivel])
-        cp3.metric("✅ R² do modelo",     f"{resultado['r2']:.3f}")
-        cp4.metric("📏 MAE",             f"{resultado['mae']:.1f} casos")
-
-        st.markdown("""
-        <div style="background:#f8f9fa;border-left:3px solid #95a5a6;padding:0.7rem 1rem;border-radius:6px;margin:0.5rem 0;font-size:0.82rem;color:#555">
-        ℹ️ <b>R²</b>: quanto mais próximo de 1, melhor o modelo. &nbsp;|&nbsp;
-        ℹ️ <b>MAE</b>: erro médio absoluto em casos/semana. &nbsp;|&nbsp;
-        ℹ️ Modelo treinado com dados reais 2020–2025.
-        </div>
-        """, unsafe_allow_html=True)
-
-        # Projeção 4 semanas
-        st.markdown("**📅 Projeção para as próximas 4 semanas:**")
-        projecoes = []
-        for s in range(1, 5):
-            p     = int(modelo.predict(pd.DataFrame([{"lag1": l1, "lag2": l2, "lag4": l4, "mm4": mm}]))[0])
-            nivel_s = 1 if p < 50 else 2 if p < 200 else 3 if p < 500 else 4
-            cor_s   = CORES_NIVEL[nivel_s]
-            projecoes.append({"Semana": f"+{s}s", "Casos": p, "Nível": LABELS_NIVEL[nivel_s], "cor": cor_s})
-            l4, l2, l1 = l2, l1, p
-            mm = (mm * 3 + p) / 4
-
-        df_proj = pd.DataFrame(projecoes)
-        fig_proj = go.Figure(go.Bar(
-            x=df_proj["Semana"],
-            y=df_proj["Casos"],
-            marker_color=df_proj["cor"],
-            text=df_proj.apply(lambda r: f"{r['Casos']:,}<br>{r['Nível']}", axis=1),
-            textposition="outside",
-        ))
-        fig_proj.update_layout(
-            height=320,
-            margin=dict(l=0, r=0, t=30, b=0),
-            yaxis_title="Casos estimados",
-            plot_bgcolor="rgba(255,248,245,0.5)",
-            paper_bgcolor="rgba(0,0,0,0)",
-        )
-        st.plotly_chart(fig_proj, use_container_width=True)
-
-        # Histórico + previsão no mesmo gráfico
         st.markdown("**📈 Histórico + Projeção:**")
         df_recente = df_mod.tail(26).copy()
         datas_hist = pd.date_range(end=pd.Timestamp.now(), periods=len(df_recente), freq="W")
