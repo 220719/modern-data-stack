@@ -504,7 +504,7 @@ else:
     st.info("Selecione uma doença e ano para ver os alertas.")
 
 # ── CHAT RAG COM GROQ ────────────────────────────────────
-st.subheader("💬 Assistente Epidemiológico — RAG + Llama 3 (Groq)")
+st.subheader("💬 Assistente Epidemiológico")
 st.markdown("Perguntas em linguagem natural sobre os dados de arboviroses.")
 
 col_s1, col_s2, col_s3 = st.columns(3)
