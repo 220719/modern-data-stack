@@ -318,7 +318,7 @@ MIT License
 
 <div align="center">
 
-### Anuar J. Mincache
+### Anuar Mincache
 
 **PhD Physics | Data Science | Machine Learning | Research & Development | Data-Driven Decision Making**
 
