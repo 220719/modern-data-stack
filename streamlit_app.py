@@ -541,83 +541,74 @@ if st.button("🔮 Gerar Previsão Automática", type="primary", use_container_w
         l4 = float(df_mod.iloc[-4]["casos"]) if len(df_mod) > 3 else l1
         mm = float(df_mod["casos"].tail(4).mean())
 
-        # Previsão semana atual
-        inp      = pd.DataFrame([{"lag1": l1, "lag2": l2, "lag4": l4, "mm4": mm}])
-        previsao = int(modelo.predict(inp)[0])
-        nivel    = 1 if previsao < 50 else 2 if previsao < 200 else 3 if previsao < 500 else 4
-
-        st.markdown("**📈 Histórico + Projeção:**")
-
-        # Calcula projeção 4 semanas
-        l1_p, l2_p, l4_p, mm_p = l1, l2, l4, mm
+        # Projeção 4 semanas (calculada mas não exibida em barras)
         projecoes = []
+        l1_p, l2_p, l4_p, mm_p = l1, l2, l4, mm
         for s in range(1, 5):
             p = int(modelo.predict(pd.DataFrame([{"lag1": l1_p, "lag2": l2_p, "lag4": l4_p, "mm4": mm_p}]))[0])
             nivel_s = 1 if p < 50 else 2 if p < 200 else 3 if p < 500 else 4
             cor_s   = CORES_NIVEL[nivel_s]
-            projecoes.append({"Semana": f"+{s}s", "Casos": p, "Nivel": LABELS_NIVEL[nivel_s], "cor": cor_s})
+            projecoes.append({"Semana": f"+{s}s", "Casos": p, "Nível": LABELS_NIVEL[nivel_s], "cor": cor_s})
             l4_p, l2_p, l1_p = l2_p, l1_p, p
             mm_p = (mm_p * 3 + p) / 4
+
         df_proj = pd.DataFrame(projecoes)
+
+        # Histórico + previsão
+        st.markdown("**📈 Histórico + Projeção:**")
         df_recente = df_mod.tail(26).copy()
         datas_hist = pd.date_range(end=pd.Timestamp.now(), periods=len(df_recente), freq="W")
         datas_prev = pd.date_range(start=datas_hist[-1] + pd.Timedelta(weeks=1), periods=4, freq="W")
 
         fig_hist = go.Figure()
         fig_hist.add_trace(go.Scatter(
-        x=datas_hist, y=df_recente["casos"],
-        mode="lines", name="Histórico real",
-        line=dict(color="#e67e22", width=2),
-        fill="tozeroy", fillcolor="rgba(230,126,34,0.1)",
+            x=datas_hist, y=df_recente["casos"],
+            mode="lines", name="Histórico real",
+            line=dict(color="#e67e22", width=2),
+            fill="tozeroy", fillcolor="rgba(230,126,34,0.1)",
         ))
-
-        # Conecta histórico com previsão
         x_conecta = [datas_hist[-1], datas_prev[0]]
         y_conecta = [df_recente["casos"].iloc[-1], df_proj["Casos"].iloc[0]]
         fig_hist.add_trace(go.Scatter(
-        x=x_conecta, y=y_conecta,
-        mode="lines", showlegend=False,
-        line=dict(color="#c0392b", width=2, dash="dash"),
+            x=x_conecta, y=y_conecta,
+            mode="lines", showlegend=False,
+            line=dict(color="#c0392b", width=2, dash="dash"),
         ))
-
         fig_hist.add_trace(go.Scatter(
-        x=datas_prev, y=df_proj["Casos"],
-        mode="lines+markers+text", name="Previsão",
-        line=dict(color="#c0392b", width=2.5, dash="dash"),
-        marker=dict(size=12, color=df_proj["cor"], line=dict(color="white", width=2)),
-        text=df_proj["Casos"].apply(lambda x: f"{int(x):,}"),
-        textposition="top center",
-        textfont=dict(size=11, color="#c0392b"),
+            x=datas_prev, y=df_proj["Casos"],
+            mode="lines+markers+text", name="Previsão",
+            line=dict(color="#c0392b", width=2.5, dash="dash"),
+            marker=dict(size=12, color=df_proj["cor"], line=dict(color="white", width=2)),
+            text=df_proj["Casos"].apply(lambda x: f"{int(x):,}"),
+            textposition="top center",
+            textfont=dict(size=11, color="#c0392b"),
         ))
-
         fig_hist.add_vline(
-        x=datas_hist[-1].timestamp() * 1000,
-        line_dash="dot", line_color="#95a5a6",
-        annotation_text="Hoje",
-        annotation_position="top right",
+            x=datas_hist[-1].timestamp() * 1000,
+            line_dash="dot", line_color="#95a5a6",
+            annotation_text="Hoje",
+            annotation_position="top right",
         )
-
-        # Zona de previsão sombreada
         fig_hist.add_vrect(
-        x0=datas_hist[-1], x1=datas_prev[-1],
-        fillcolor="rgba(192,57,43,0.05)",
-        layer="below", line_width=0,
-        annotation_text="Zona de previsão",
-        annotation_position="top left",
-        annotation_font_size=11,
-        annotation_font_color="#c0392b",
+            x0=datas_hist[-1], x1=datas_prev[-1],
+            fillcolor="rgba(192,57,43,0.05)",
+            layer="below", line_width=0,
+            annotation_text="Zona de previsão",
+            annotation_position="top left",
+            annotation_font_size=11,
+            annotation_font_color="#c0392b",
         )
-
         fig_hist.update_layout(
-        height=350,
-        margin=dict(l=0, r=0, t=30, b=0),
-        legend=dict(orientation="h", y=1.08),
-        hovermode="x unified",
-        yaxis_title="Casos estimados",
-        plot_bgcolor="rgba(255,248,245,0.5)",
-        paper_bgcolor="rgba(0,0,0,0)",
+            height=350,
+            margin=dict(l=0, r=0, t=30, b=0),
+            legend=dict(orientation="h", y=1.08),
+            hovermode="x unified",
+            yaxis_title="Casos estimados",
+            plot_bgcolor="rgba(255,248,245,0.5)",
+            paper_bgcolor="rgba(0,0,0,0)",
         )
         st.plotly_chart(fig_hist, use_container_width=True)
+
     else:
         st.warning("Dados insuficientes para esse município/doença. Tente dengue nas capitais.")
         
@@ -714,7 +705,7 @@ with col_a1:
         text-align: center;
     ">
         <div style="font-size: 3rem">👨‍🔬</div>
-        <h3 style="color: #d35400; margin: 0.5rem 0">Anuar J. Mincache</h3>
+        <h3 style="color: #d35400; margin: 0.5rem 0">Anuar Mincache</h3>
         <p style="color: #7f8c8d; font-size: 0.85rem; margin: 0">
             PhD Physics | Data Science<br>
             Machine Learning | Research
