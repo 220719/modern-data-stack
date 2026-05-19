@@ -594,33 +594,61 @@ if st.button("🔮 Gerar Previsão Automática", type="primary", use_container_w
         datas_hist = pd.date_range(end=pd.Timestamp.now(), periods=len(df_recente), freq="W")
         datas_prev = pd.date_range(start=datas_hist[-1] + pd.Timedelta(weeks=1), periods=4, freq="W")
 
-        fig_hist = go.Figure()
-        fig_hist.add_trace(go.Scatter(
-            x=datas_hist, y=df_recente["casos"],
-            mode="lines", name="Histórico real",
-            line=dict(color="#e67e22", width=2),
-            fill="tozeroy", fillcolor="rgba(230,126,34,0.1)",
-        ))
-        fig_hist.add_trace(go.Scatter(
-            x=datas_prev, y=df_proj["Casos"],
-            mode="lines+markers", name="Previsão",
-            line=dict(color="#c0392b", width=2.5, dash="dash"),
-            marker=dict(size=8, color=df_proj["cor"]),
-        ))
-        fig_hist.add_vline(
-            x=datas_hist[-1].timestamp() * 1000,
-            line_dash="dot", line_color="#95a5a6",
-            annotation_text="Hoje",
-        )
-        fig_hist.update_layout(
-            height=300,
-            margin=dict(l=0, r=0, t=10, b=0),
-            legend=dict(orientation="h", y=1.08),
-            hovermode="x unified",
-            plot_bgcolor="rgba(255,248,245,0.5)",
-            paper_bgcolor="rgba(0,0,0,0)",
-        )
-        st.plotly_chart(fig_hist, use_container_width=True)
+fig_hist = go.Figure()
+fig_hist.add_trace(go.Scatter(
+    x=datas_hist, y=df_recente["casos"],
+    mode="lines", name="Histórico real",
+    line=dict(color="#e67e22", width=2),
+    fill="tozeroy", fillcolor="rgba(230,126,34,0.1)",
+))
+
+# Conecta histórico com previsão
+x_conecta = [datas_hist[-1], datas_prev[0]]
+y_conecta = [df_recente["casos"].iloc[-1], df_proj["Casos"].iloc[0]]
+fig_hist.add_trace(go.Scatter(
+    x=x_conecta, y=y_conecta,
+    mode="lines", showlegend=False,
+    line=dict(color="#c0392b", width=2, dash="dash"),
+))
+
+fig_hist.add_trace(go.Scatter(
+    x=datas_prev, y=df_proj["Casos"],
+    mode="lines+markers+text", name="Previsão",
+    line=dict(color="#c0392b", width=2.5, dash="dash"),
+    marker=dict(size=12, color=df_proj["cor"], line=dict(color="white", width=2)),
+    text=df_proj["Casos"].apply(lambda x: f"{int(x):,}"),
+    textposition="top center",
+    textfont=dict(size=11, color="#c0392b"),
+))
+
+fig_hist.add_vline(
+    x=datas_hist[-1].timestamp() * 1000,
+    line_dash="dot", line_color="#95a5a6",
+    annotation_text="Hoje",
+    annotation_position="top right",
+)
+
+# Zona de previsão sombreada
+fig_hist.add_vrect(
+    x0=datas_hist[-1], x1=datas_prev[-1],
+    fillcolor="rgba(192,57,43,0.05)",
+    layer="below", line_width=0,
+    annotation_text="Zona de previsão",
+    annotation_position="top left",
+    annotation_font_size=11,
+    annotation_font_color="#c0392b",
+)
+
+fig_hist.update_layout(
+    height=350,
+    margin=dict(l=0, r=0, t=30, b=0),
+    legend=dict(orientation="h", y=1.08),
+    hovermode="x unified",
+    yaxis_title="Casos estimados",
+    plot_bgcolor="rgba(255,248,245,0.5)",
+    paper_bgcolor="rgba(0,0,0,0)",
+)
+st.plotly_chart(fig_hist, use_container_width=True)
     else:
         st.warning("Dados insuficientes para esse município/doença. Tente dengue nas capitais.")
         
