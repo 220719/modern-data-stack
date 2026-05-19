@@ -28,9 +28,46 @@ st.markdown("""
     div[data-testid="stMetric"] {
         background: #fff8f5;
         border-left: 4px solid #e67e22;
-        padding: 0.8rem 1rem; border-radius: 8px;
+        padding: 0.5rem 0.8rem;
+        border-radius: 8px;
     }
-    section[data-testid="stSidebar"] { background-color: #fff8f5; }
+    div[data-testid="stMetric"] label {
+        font-size: 0.72rem !important;
+        white-space: normal !important;
+        overflow: visible !important;
+        text-overflow: unset !important;
+    }
+    div[data-testid="stMetric"] [data-testid="stMetricValue"] {
+        font-size: 1.3rem !important;
+        white-space: normal !important;
+        overflow: visible !important;
+        text-overflow: unset !important;
+    }
+    section[data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #d35400 0%, #e67e22 40%, #f39c12 100%);
+    }
+    section[data-testid="stSidebar"] * {
+        color: white !important;
+    }
+    section[data-testid="stSidebar"] .stSelectbox > div > div {
+        background: rgba(255,255,255,0.2) !important;
+        color: white !important;
+        border: 1px solid rgba(255,255,255,0.4) !important;
+    }
+    section[data-testid="stSidebar"] label {
+        color: white !important;
+        font-weight: 600 !important;
+    }
+    .update-badge {
+        background: linear-gradient(135deg, #d35400, #e67e22);
+        color: white;
+        padding: 0.4rem 1rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        display: inline-block;
+        margin-bottom: 1rem;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -231,14 +268,24 @@ doenca_sel    = st.sidebar.selectbox("Doença", ["dengue", "chikungunya", "zika"
 ano_sel       = st.sidebar.selectbox("Ano", [2025, 2024, 2023, 2022, 2021, 2020])
 municipio_sel = st.sidebar.selectbox("Município", sorted(MUNICIPIOS_GEOCODIGOS.keys()))
 st.sidebar.markdown("---")
-st.sidebar.markdown("**Fonte:** InfoDengue (Fiocruz)")
-st.sidebar.markdown("**Cobertura:** 31 municípios · 2020–2025")
-st.sidebar.markdown("**Stack:** Python · dbt · MLflow · FastAPI · Kafka · RAG · LLM")
+st.sidebar.markdown("**📡 Fonte:** InfoDengue (Fiocruz)")
+st.sidebar.markdown("**🗺️ Cobertura:** 31 municípios")
+st.sidebar.markdown("**📅 Período:** 2020–2025")
+st.sidebar.markdown("**⚡ Stack:** Python · dbt · MLflow · FastAPI · Kafka · RAG · LLM")
 st.sidebar.markdown("[📦 GitHub](https://github.com/220719/modern-data-stack)")
 
-# ── HEADER ───────────────────────────────────────────────
+from datetime import datetime
+
 st.markdown('<div class="main-header">🦟 Observatório Nacional de Arboviroses</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-header">Vigilância epidemiológica de dengue, chikungunya e zika — 31 municípios brasileiros (2020–2025)</div>', unsafe_allow_html=True)
+
+# Badge de última atualização
+agora = datetime.now().strftime("%d/%m/%Y às %H:%M")
+st.markdown(f"""
+<div style="text-align:center; margin-bottom:1rem;">
+    <span class="update-badge">🕐 Última atualização: {agora} (horário de Brasília)</span>
+</div>
+""", unsafe_allow_html=True)
 
 # ── MÉTRICAS ─────────────────────────────────────────────
 with st.spinner("Carregando dados..."):
