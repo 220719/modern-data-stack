@@ -525,9 +525,10 @@ with col_a2:
     <div style="padding: 1rem">
         <h4 style="color: #d35400">Sobre este projeto</h4>
         <p style="color: #2c3e50; line-height: 1.8">
-            Este dashboard foi desenvolvido como portfólio de <b>Modern Data Stack</b>,
-            cobrindo todas as camadas de um pipeline de dados profissional moderno —
-            da ingestão ao deploy, passando por ML, RAG e LLMs.
+            Este dashboard foi desenvolvido como parte de uma <b>pesquisa científica</b>
+            em vigilância epidemiológica, integrando técnicas modernas de
+            engenharia de dados, aprendizado de máquina e inteligência artificial
+            generativa aplicadas à saúde pública brasileira.
         </p>
         <p style="color: #2c3e50; line-height: 1.8">
             Os dados são reais, coletados do <b>InfoDengue (Fiocruz)</b> e <b>OpenMeteo</b>,
