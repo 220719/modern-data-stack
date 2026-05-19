@@ -418,83 +418,145 @@ if not df_hist.empty and "data" in df_hist.columns:
 
 st.markdown("---")
 
-# ── SIMULADOR ML ─────────────────────────────────────────
+# ── CLIMA × CASOS ────────────────────────────────────────
 st.markdown("---")
+st.subheader(f"🌡️ Clima × Casos — {municipio_sel} / {doenca_sel.capitalize()}")
+st.markdown("Relação entre condições climáticas e incidência de casos ao longo do tempo.")
+
+if not df_hist.empty and "data" in df_hist.columns:
+    # Busca clima via OpenMeteo
+    @st.cache_data(ttl=3600)
+    def buscar_clima_municipio(municipio: str) -> pd.DataFrame:
+        coords = COORDENADAS.get(municipio)
+        if not coords:
+            return pd.DataFrame()
+        try:
+            url = "https://archive-api.open-meteo.com/v1/archive"
+            params = {
+                "latitude": coords["lat"],
+                "longitude": coords["lon"],
+                "start_date": "2020-01-01",
+                "end_date": "2025-12-31",
+                "daily": "temperature_2m_min,precipitation_sum",
+                "timezone": "America/Sao_Paulo",
+            }
+            r = requests.get(url, params=params, timeout=20)
+            r.raise_for_status()
+            data = r.json()
+            df = pd.DataFrame({
+                "data": pd.to_datetime(data["daily"]["time"]),
+                "temp_min": data["daily"]["temperature_2m_min"],
+                "precipitacao": data["daily"]["precipitation_sum"],
+            })
+            # Agrega por semana
+            df["semana"] = df["data"].dt.isocalendar().week.astype(int)
+            df["ano"]    = df["data"].dt.year
+            df_sem = df.groupby(["ano", "semana"]).agg(
+                temp_min=("temp_min", "mean"),
+                precipitacao=("precipitacao", "sum"),
+                data=("data", "first"),
+            ).reset_index()
+            return df_sem
+        except:
+            return pd.DataFrame()
+
+    df_clima = buscar_clima_municipio(municipio_sel)
+
+    if not df_clima.empty:
+        # Merge casos + clima
+        df_hist["semana_num"] = df_hist["SE"].astype(str).str[-2:].astype(int)
+        df_hist["ano_num"]    = df_hist["SE"].astype(str).str[:4].astype(int)
+        df_merged = df_hist.merge(
+            df_clima,
+            left_on=["ano_num", "semana_num"],
+            right_on=["ano", "semana"],
+            how="left"
+        )
+
+        fig_clima = go.Figure()
+        fig_clima.add_trace(go.Bar(
+            x=df_merged["data_x"],
+            y=df_merged["precipitacao"],
+            name="Precipitação (mm)",
+            marker_color="rgba(52,152,219,0.4)",
+            yaxis="y3",
+        ))
+        fig_clima.add_trace(go.Scatter(
+            x=df_merged["data_x"],
+            y=df_merged["temp_min"],
+            name="Temp. mínima (°C)",
+            line=dict(color="#e74c3c", width=1.5, dash="dot"),
+            yaxis="y2",
+        ))
+        fig_clima.add_trace(go.Scatter(
+            x=df_merged["data_x"],
+            y=df_merged["casos_estimados"],
+            name="Casos estimados",
+            line=dict(color="#e67e22", width=2.5),
+            fill="tozeroy",
+            fillcolor="rgba(230,126,34,0.1)",
+            yaxis="y1",
+        ))
+        fig_clima.update_layout(
+            height=420,
+            margin=dict(l=0, r=60, t=20, b=0),
+            legend=dict(orientation="h", y=1.08),
+            hovermode="x unified",
+            plot_bgcolor="rgba(255,248,245,0.5)",
+            paper_bgcolor="rgba(0,0,0,0)",
+            yaxis=dict(title="Casos", side="left"),
+            yaxis2=dict(title="Temp (°C)", overlaying="y", side="right", showgrid=False),
+            yaxis3=dict(overlaying="y", side="right", showgrid=False, visible=False),
+        )
+        st.plotly_chart(fig_clima, use_container_width=True)
+        st.caption("Dados climáticos: OpenMeteo | Dados epidemiológicos: InfoDengue (Fiocruz)")
+    else:
+        st.info("Dados climáticos não disponíveis para este município.")
+
+st.markdown("---")
+
+# ── SIMULADOR ML AUTOMÁTICO ───────────────────────────────
 st.subheader("🤖 Simulador de Previsão — Machine Learning")
-st.markdown("Informe as condições climáticas previstas e o modelo estima os casos para as próximas semanas.")
+st.markdown("Selecione o município e a doença — o modelo busca os dados reais e projeta as próximas 4 semanas automaticamente.")
 
 col1, col2 = st.columns(2)
-
 with col1:
-    st.markdown("**📍 Localização e doença**")
     mun_prev = st.selectbox("Município", sorted(MUNICIPIOS_GEOCODIGOS.keys()), key="ml_mun")
+with col2:
     doe_prev = st.selectbox("Doença", ["dengue", "chikungunya", "zika"], key="ml_doe",
                  format_func=lambda x: x.capitalize())
 
-with col2:
-    st.markdown("**🌡️ Condições climáticas previstas**")
-    temp_min   = st.slider("Temperatura mínima (°C)", 10.0, 40.0, 22.0, 0.5,
-                    help="Temperatura mínima esperada nas próximas semanas")
-    precip     = st.slider("Precipitação (mm)", 0.0, 300.0, 50.0, 5.0,
-                    help="Volume de chuva esperado nas próximas semanas")
-    umidade    = st.slider("Umidade relativa (%)", 30.0, 100.0, 75.0, 1.0,
-                    help="Umidade relativa do ar esperada")
-
-if st.button("🔮 Gerar Previsão", type="primary", use_container_width=True):
-    with st.spinner("Buscando dados históricos e treinando modelo..."):
+if st.button("🔮 Gerar Previsão Automática", type="primary", use_container_width=True):
+    with st.spinner(f"Buscando dados reais de {mun_prev} e treinando modelo..."):
         resultado = treinar_modelo_cloud(mun_prev, doe_prev)
 
     if resultado:
         modelo  = resultado["model"]
-        df_hist = resultado["df"]
+        df_mod  = resultado["df"]
 
-        # Usa últimos casos reais como base + clima informado pelo usuário
-        ultimo  = df_hist.iloc[-1]
+        # Últimos valores reais
+        ultimo  = df_mod.iloc[-1]
         l1 = float(ultimo["casos"])
-        l2 = float(df_hist.iloc[-2]["casos"]) if len(df_hist) > 1 else l1
-        l4 = float(df_hist.iloc[-4]["casos"]) if len(df_hist) > 3 else l1
-        mm = float(df_hist["casos"].tail(4).mean())
+        l2 = float(df_mod.iloc[-2]["casos"]) if len(df_mod) > 1 else l1
+        l4 = float(df_mod.iloc[-4]["casos"]) if len(df_mod) > 3 else l1
+        mm = float(df_mod["casos"].tail(4).mean())
 
-        inp = pd.DataFrame([{
-            "lag1": l1, "lag2": l2, "lag4": l4, "mm4": mm
-        }])
-        previsao   = int(modelo.predict(inp)[0])
-        nivel_prev = 1 if previsao < 50 else 2 if previsao < 200 else 3 if previsao < 500 else 4
+        # Previsão semana atual
+        inp      = pd.DataFrame([{"lag1": l1, "lag2": l2, "lag4": l4, "mm4": mm}])
+        previsao = int(modelo.predict(inp)[0])
+        nivel    = 1 if previsao < 50 else 2 if previsao < 200 else 3 if previsao < 500 else 4
 
-        # Fator climático — ajusta previsão com base no clima informado
-        fator_temp   = 1 + (temp_min - 22) * 0.02
-        fator_chuva  = 1 + (precip - 50) * 0.001
-        fator_umid   = 1 + (umidade - 75) * 0.005
-        fator_clima  = max(0.5, min(2.0, fator_temp * fator_chuva * fator_umid))
-        previsao_adj = int(previsao * fator_clima)
-        nivel_adj    = 1 if previsao_adj < 50 else 2 if previsao_adj < 200 else 3 if previsao_adj < 500 else 4
-
-        st.markdown("---")
         cp1, cp2, cp3, cp4 = st.columns(4)
-        cp1.metric("🔮 Casos previstos",     f"{previsao_adj:,}")
-        cp2.metric("📊 Nível estimado",      LABELS_NIVEL[nivel_adj])
-        cp3.metric("✅ R² do modelo",        f"{resultado['r2']:.3f}")
-        cp4.metric("📏 Erro médio (MAE)",    f"{resultado['mae']:.1f} casos")
-
-        # Impacto do clima
-        delta = previsao_adj - previsao
-        sinal = "+" if delta > 0 else ""
-        cor   = "#c0392b" if delta > 0 else "#27ae60"
-        st.markdown(f"""
-        <div style="background:#f8f9fa;border-left:3px solid {cor};padding:0.7rem 1rem;border-radius:6px;margin:0.5rem 0;font-size:0.85rem">
-            🌡️ <b>Impacto climático:</b> As condições informadas ajustam a previsão base em
-            <b style="color:{cor}">{sinal}{delta:,} casos</b>
-            (fator: {fator_clima:.2f}x) —
-            Temp: {'+' if fator_temp>1 else ''}{(fator_temp-1)*100:.1f}% |
-            Chuva: {'+' if fator_chuva>1 else ''}{(fator_chuva-1)*100:.1f}% |
-            Umidade: {'+' if fator_umid>1 else ''}{(fator_umid-1)*100:.1f}%
-        </div>
-        """, unsafe_allow_html=True)
+        cp1.metric("🔮 Próxima semana",   f"{previsao:,} casos")
+        cp2.metric("📊 Nível estimado",   LABELS_NIVEL[nivel])
+        cp3.metric("✅ R² do modelo",     f"{resultado['r2']:.3f}")
+        cp4.metric("📏 MAE",             f"{resultado['mae']:.1f} casos")
 
         st.markdown("""
-        <div style="background:#f8f9fa;border-left:3px solid #95a5a6;padding:0.7rem 1rem;border-radius:6px;margin-top:0.5rem;font-size:0.82rem;color:#555">
-        ℹ️ <b>R²</b>: quanto mais próximo de 1, melhor o modelo explica a variação dos casos. &nbsp;|&nbsp;
-        ℹ️ <b>MAE</b>: erro médio absoluto em número de casos por semana.
+        <div style="background:#f8f9fa;border-left:3px solid #95a5a6;padding:0.7rem 1rem;border-radius:6px;margin:0.5rem 0;font-size:0.82rem;color:#555">
+        ℹ️ <b>R²</b>: quanto mais próximo de 1, melhor o modelo. &nbsp;|&nbsp;
+        ℹ️ <b>MAE</b>: erro médio absoluto em casos/semana. &nbsp;|&nbsp;
+        ℹ️ Modelo treinado com dados reais 2020–2025.
         </div>
         """, unsafe_allow_html=True)
 
@@ -502,33 +564,66 @@ if st.button("🔮 Gerar Previsão", type="primary", use_container_width=True):
         st.markdown("**📅 Projeção para as próximas 4 semanas:**")
         projecoes = []
         for s in range(1, 5):
-            p = int(modelo.predict(pd.DataFrame([{"lag1": l1, "lag2": l2, "lag4": l4, "mm4": mm}]))[0])
-            p_adj = int(p * fator_clima)
-            projecoes.append({"Semana": f"+{s}s", "Casos (base)": p, "Casos (ajust. clima)": p_adj})
-            l4, l2, l1 = l2, l1, p_adj
-            mm = (mm * 3 + p_adj) / 4
+            p     = int(modelo.predict(pd.DataFrame([{"lag1": l1, "lag2": l2, "lag4": l4, "mm4": mm}]))[0])
+            nivel_s = 1 if p < 50 else 2 if p < 200 else 3 if p < 500 else 4
+            cor_s   = CORES_NIVEL[nivel_s]
+            projecoes.append({"Semana": f"+{s}s", "Casos": p, "Nível": LABELS_NIVEL[nivel_s], "cor": cor_s})
+            l4, l2, l1 = l2, l1, p
+            mm = (mm * 3 + p) / 4
 
         df_proj = pd.DataFrame(projecoes)
-        fig_proj = go.Figure()
-        fig_proj.add_trace(go.Bar(
-            x=df_proj["Semana"], y=df_proj["Casos (base)"],
-            name="Sem ajuste climático", marker_color="#bdc3c7",
-        ))
-        fig_proj.add_trace(go.Bar(
-            x=df_proj["Semana"], y=df_proj["Casos (ajust. clima)"],
-            name="Com ajuste climático", marker_color="#e67e22",
+        fig_proj = go.Figure(go.Bar(
+            x=df_proj["Semana"],
+            y=df_proj["Casos"],
+            marker_color=df_proj["cor"],
+            text=df_proj.apply(lambda r: f"{r['Casos']:,}<br>{r['Nível']}", axis=1),
+            textposition="outside",
         ))
         fig_proj.update_layout(
-            height=300, barmode="group",
-            margin=dict(l=0,r=0,t=10,b=0),
-            legend=dict(orientation="h", y=1.1),
+            height=320,
+            margin=dict(l=0, r=0, t=30, b=0),
+            yaxis_title="Casos estimados",
             plot_bgcolor="rgba(255,248,245,0.5)",
             paper_bgcolor="rgba(0,0,0,0)",
         )
         st.plotly_chart(fig_proj, use_container_width=True)
-    else:
-        st.warning("Dados insuficientes para esse município/doença.")
 
+        # Histórico + previsão no mesmo gráfico
+        st.markdown("**📈 Histórico + Projeção:**")
+        df_recente = df_mod.tail(26).copy()
+        datas_hist = pd.date_range(end=pd.Timestamp.now(), periods=len(df_recente), freq="W")
+        datas_prev = pd.date_range(start=datas_hist[-1] + pd.Timedelta(weeks=1), periods=4, freq="W")
+
+        fig_hist = go.Figure()
+        fig_hist.add_trace(go.Scatter(
+            x=datas_hist, y=df_recente["casos"],
+            mode="lines", name="Histórico real",
+            line=dict(color="#e67e22", width=2),
+            fill="tozeroy", fillcolor="rgba(230,126,34,0.1)",
+        ))
+        fig_hist.add_trace(go.Scatter(
+            x=datas_prev, y=df_proj["Casos"],
+            mode="lines+markers", name="Previsão",
+            line=dict(color="#c0392b", width=2.5, dash="dash"),
+            marker=dict(size=8, color=df_proj["cor"]),
+        ))
+        fig_hist.add_vline(
+            x=datas_hist[-1].timestamp() * 1000,
+            line_dash="dot", line_color="#95a5a6",
+            annotation_text="Hoje",
+        )
+        fig_hist.update_layout(
+            height=300,
+            margin=dict(l=0, r=0, t=10, b=0),
+            legend=dict(orientation="h", y=1.08),
+            hovermode="x unified",
+            plot_bgcolor="rgba(255,248,245,0.5)",
+            paper_bgcolor="rgba(0,0,0,0)",
+        )
+        st.plotly_chart(fig_hist, use_container_width=True)
+    else:
+        st.warning("Dados insuficientes para esse município/doença. Tente dengue nas capitais.")
+        
 st.markdown("---")
 
 # ── ALERTAS ──────────────────────────────────────────────
