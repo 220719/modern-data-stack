@@ -534,7 +534,7 @@ with col_a2:
             cobrindo 31 municípios brasileiros de 2020 a 2025.
         </p>
         <br>
-        <a href="https://www.linkedin.com/in/SEU_LINKEDIN" target="_blank" style="
+        <a href="https://www.linkedin.com/in/anuar-mincache/" target="_blank" style="
             background: #0077b5;
             color: white;
             padding: 0.5rem 1.5rem;
