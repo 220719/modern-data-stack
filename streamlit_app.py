@@ -535,41 +535,24 @@ with col_a2:
             cobrindo 31 municípios brasileiros de 2020 a 2025.
         </p>
         <br>
-        <a href="https://www.linkedin.com/in/anuar-mincache/" target="_blank" style="
-            background: #0077b5;
-            color: white;
-            padding: 0.5rem 1.5rem;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: bold;
-            margin-right: 1rem;
-        ">🔗 LinkedIn</a>
-        <a href="http://lattes.cnpq.br/9526608938362113" target="_blank" style="
-            background: #1a5276;
-            color: white;
-            padding: 0.5rem 1.5rem;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: bold;
-            margin-right: 1rem;
-        ">🎓 Currículo Lattes</a>
-        <a href="https://github.com/220719" target="_blank" style="
-            background: #2c3e50;
-            color: white;
-            padding: 0.5rem 1.5rem;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: bold;
-            margin-right: 1rem;
-        ">📦 GitHub</a>
-        <a href="https://github.com/220719/modern-data-stack" target="_blank" style="
-            background: #e67e22;
-            color: white;
-            padding: 0.5rem 1.5rem;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: bold;
-        ">🦟 Repositório</a>
+<div style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:1rem;">
+            <a href="https://www.linkedin.com/in/anuar-mincache/" target="_blank" style="
+                background:#0077b5; color:white; padding:0.4rem 1rem;
+                border-radius:6px; text-decoration:none; font-weight:bold; font-size:0.85rem;
+            ">🔗 LinkedIn</a>
+            <a href="http://lattes.cnpq.br/9526608938362113" target="_blank" style="
+                background:#1a5276; color:white; padding:0.4rem 1rem;
+                border-radius:6px; text-decoration:none; font-weight:bold; font-size:0.85rem;
+            ">🎓 Lattes</a>
+            <a href="https://github.com/220719" target="_blank" style="
+                background:#2c3e50; color:white; padding:0.4rem 1rem;
+                border-radius:6px; text-decoration:none; font-weight:bold; font-size:0.85rem;
+            ">📦 GitHub</a>
+            <a href="https://github.com/220719/modern-data-stack" target="_blank" style="
+                background:#e67e22; color:white; padding:0.4rem 1rem;
+                border-radius:6px; text-decoration:none; font-weight:bold; font-size:0.85rem;
+            ">🦟 Repositório</a>
+        </div>
     """, unsafe_allow_html=True)
 
 st.caption("Dados: InfoDengue (Fiocruz) | Stack: Python · dbt · MLflow · FastAPI · Streamlit · Docker · Airflow · Kafka · RAG · LLM")
