@@ -544,6 +544,15 @@ with col_a2:
             font-weight: bold;
             margin-right: 1rem;
         ">🔗 LinkedIn</a>
+        <a href="http://lattes.cnpq.br/9526608938362113" target="_blank" style="
+            background: #1a5276;
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-right: 1rem;
+        ">🎓 Currículo Lattes</a>
         <a href="https://github.com/220719" target="_blank" style="
             background: #2c3e50;
             color: white;
@@ -561,7 +570,6 @@ with col_a2:
             text-decoration: none;
             font-weight: bold;
         ">🦟 Repositório</a>
-    </div>
     """, unsafe_allow_html=True)
 
 st.caption("Dados: InfoDengue (Fiocruz) | Stack: Python · dbt · MLflow · FastAPI · Streamlit · Docker · Airflow · Kafka · RAG · LLM")
