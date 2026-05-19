@@ -280,7 +280,9 @@ st.markdown('<div class="main-header">🦟 Observatório Nacional de Arboviroses
 st.markdown('<div class="sub-header">Vigilância epidemiológica de dengue, chikungunya e zika — 31 municípios brasileiros (2020–2025)</div>', unsafe_allow_html=True)
 
 # Badge de última atualização
-agora = datetime.now().strftime("%d/%m/%Y às %H:%M")
+from datetime import datetime, timezone, timedelta
+brasilia = timezone(timedelta(hours=-3))
+agora = datetime.now(brasilia).strftime("%d/%m/%Y às %H:%M")
 st.markdown(f"""
 <div style="text-align:center; margin-bottom:1rem;">
     <span class="update-badge">🕐 Última atualização: {agora} (horário de Brasília)</span>
