@@ -649,8 +649,8 @@ fig_hist.update_layout(
     paper_bgcolor="rgba(0,0,0,0)",
 )
 st.plotly_chart(fig_hist, use_container_width=True)
-    else:
-        st.warning("Dados insuficientes para esse município/doença. Tente dengue nas capitais.")
+else:
+    st.warning("Dados insuficientes para esse município/doença. Tente dengue nas capitais.")
         
 st.markdown("---")
 
