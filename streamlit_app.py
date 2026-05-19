@@ -205,7 +205,7 @@ def chat_groq(pergunta: str, contexto: str) -> str:
         return "⚠️ GROQ_API_KEY não configurada nos secrets do Streamlit Cloud."
 
     llm = ChatGroq(
-        model="llama-3.3-70b-versatile",,
+        model="llama-3.3-70b-versatile",
         api_key=groq_key,
         temperature=0.1,
     )
