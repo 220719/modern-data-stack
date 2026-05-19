@@ -497,4 +497,70 @@ if st.button("🔍 Perguntar", type="primary") and pergunta:
     st.caption("Resposta gerada por Llama 3 70B via Groq com base nos dados reais do InfoDengue")
 
 st.markdown("---")
+
+# ── SOBRE O AUTOR ─────────────────────────────────────────
+st.markdown("---")
+col_a1, col_a2 = st.columns([1, 3])
+
+with col_a1:
+    st.markdown("""
+    <div style="
+        background: linear-gradient(135deg, #fff8f5, #fdebd0);
+        border: 2px solid #e67e22;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+    ">
+        <div style="font-size: 3rem">👨‍🔬</div>
+        <h3 style="color: #d35400; margin: 0.5rem 0">Anuar J. Mincache</h3>
+        <p style="color: #7f8c8d; font-size: 0.85rem; margin: 0">
+            PhD Physics | Data Science<br>
+            Machine Learning | Research
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col_a2:
+    st.markdown("""
+    <div style="padding: 1rem">
+        <h4 style="color: #d35400">Sobre este projeto</h4>
+        <p style="color: #2c3e50; line-height: 1.8">
+            Este dashboard foi desenvolvido como portfólio de <b>Modern Data Stack</b>,
+            cobrindo todas as camadas de um pipeline de dados profissional moderno —
+            da ingestão ao deploy, passando por ML, RAG e LLMs.
+        </p>
+        <p style="color: #2c3e50; line-height: 1.8">
+            Os dados são reais, coletados do <b>InfoDengue (Fiocruz)</b> e <b>OpenMeteo</b>,
+            cobrindo 31 municípios brasileiros de 2020 a 2025.
+        </p>
+        <br>
+        <a href="https://www.linkedin.com/in/SEU_LINKEDIN" target="_blank" style="
+            background: #0077b5;
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-right: 1rem;
+        ">🔗 LinkedIn</a>
+        <a href="https://github.com/220719" target="_blank" style="
+            background: #2c3e50;
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-right: 1rem;
+        ">📦 GitHub</a>
+        <a href="https://github.com/220719/modern-data-stack" target="_blank" style="
+            background: #e67e22;
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+        ">🦟 Repositório</a>
+    </div>
+    """, unsafe_allow_html=True)
+
 st.caption("Dados: InfoDengue (Fiocruz) | Stack: Python · dbt · MLflow · FastAPI · Streamlit · Docker · Airflow · Kafka · RAG · LLM")
