@@ -189,48 +189,61 @@ def carregar_historico_api(municipio: str, doenca: str, ano_inicio: int, ano_fim
 def treinar_modelo_cloud(municipio: str, doenca: str):
     from sklearn.ensemble import RandomForestRegressor
     from sklearn.metrics import r2_score, mean_absolute_error
-    import numpy as np
+
+    geocodigo = MUNICIPIOS_GEOCODIGOS.get(municipio)
+    if not geocodigo:
+        return None
 
     dfs = []
-    geocodigo = MUNICIPIOS_GEOCODIGOS.get(municipio)
     for ano in range(2020, 2026):
-        df = fetch_infodengue(geocodigo, doenca, ano)
-        if not df.empty:
-            dfs.append(df)
+        try:
+            df = fetch_infodengue(geocodigo, doenca, ano)
+            if not df.empty and "casos_est" in df.columns:
+                dfs.append(df)
+        except:
+            continue
 
     if not dfs:
         return None
 
-    df_all = pd.concat(dfs).sort_values("SE")
-    df_all["casos"] = pd.to_numeric(df_all.get("casos_est", 0), errors="coerce").fillna(0)
-    df_all["lag1"]  = df_all["casos"].shift(1)
-    df_all["lag2"]  = df_all["casos"].shift(2)
-    df_all["lag4"]  = df_all["casos"].shift(4)
-    df_all["mm4"]   = df_all["casos"].rolling(4).mean()
-    df_all = df_all.dropna()
+    df_all = pd.concat(dfs, ignore_index=True).sort_values("SE")
+    df_all["casos"] = pd.to_numeric(df_all["casos_est"], errors="coerce").fillna(0)
 
-    if len(df_all) < 60:
+    if len(df_all) < 20:
         return None
+
+    df_all["lag1"] = df_all["casos"].shift(1)
+    df_all["lag2"] = df_all["casos"].shift(2)
+    df_all["lag4"] = df_all["casos"].shift(4)
+    df_all["mm4"]  = df_all["casos"].rolling(4, min_periods=1).mean()
+    df_all = df_all.fillna(0)
 
     features = ["lag1", "lag2", "lag4", "mm4"]
     X = df_all[features].values
     y = df_all["casos"].values
-    n_test = 52
-    X_train, X_test = X[:-n_test], X[-n_test:]
-    y_train, y_test = y[:-n_test], y[-n_test:]
+
+    n_test  = min(12, len(df_all) // 4)
+    n_train = len(df_all) - n_test
+
+    if n_train < 10:
+        return None
+
+    X_train, X_test = X[:n_train], X[n_train:]
+    y_train, y_test = y[:n_train], y[n_train:]
 
     model = RandomForestRegressor(n_estimators=100, random_state=42, n_jobs=-1)
     model.fit(X_train, y_train)
-    y_pred = model.predict(X_test)
+
+    r2  = r2_score(y_test, model.predict(X_test)) if len(y_test) > 1 else 0.0
+    mae = mean_absolute_error(y_test, model.predict(X_test)) if len(y_test) > 1 else 0.0
 
     return {
-        "model":   model,
-        "r2":      r2_score(y_test, y_pred),
-        "mae":     mean_absolute_error(y_test, y_pred),
-        "df":      df_all,
+        "model":    model,
+        "r2":       r2,
+        "mae":      mae,
+        "df":       df_all,
         "features": features,
     }
-
 
 def chat_groq(pergunta: str, contexto: str) -> str:
     from langchain_groq import ChatGroq
