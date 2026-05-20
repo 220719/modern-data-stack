@@ -751,9 +751,9 @@ with col_a2:
 st.markdown(f"""
 <div style="text-align:center; margin-bottom:1rem;">
     <span style="background:#27ae60;color:white;padding:0.4rem 1.2rem;border-radius:20px;font-size:0.85rem;font-weight:600">
-        🟢 Em operação desde 18 de maio de 2026 — Maringá, Paraná
+        📍 Em operação desde 18 de maio de 2026 às 23h17 — Maringá, Paraná
     </span>
 </div>
-""", unsafe_allow_html=True) 
+""", unsafe_allow_html=True)
 
 st.caption("Dados: InfoDengue (Fiocruz) | Stack: Python · dbt · MLflow · FastAPI · Streamlit · Docker · Airflow · Kafka · RAG · LLM")
