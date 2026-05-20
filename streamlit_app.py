@@ -748,4 +748,23 @@ with col_a2:
         </div>
     """, unsafe_allow_html=True)
 
+from datetime import datetime, timezone, timedelta
+
+brasilia = timezone(timedelta(hours=-3))
+agora = datetime.now(brasilia)
+inicio = datetime(2026, 5, 19, 0, 0, 0, tzinfo=brasilia)  # data que entrou no ar
+uptime = agora - inicio
+dias   = uptime.days
+horas  = uptime.seconds // 3600
+mins   = (uptime.seconds % 3600) // 60
+
+st.markdown(f"""
+<div style="text-align:center; margin-bottom:1rem; display:flex; justify-content:center; gap:1rem; flex-wrap:wrap">
+    <span class="update-badge">🕐 Atualizado: {agora.strftime("%d/%m/%Y às %H:%M")}</span>
+    <span style="background:#27ae60;color:white;padding:0.4rem 1rem;border-radius:20px;font-size:0.8rem;font-weight:600">
+        🟢 Online desde 19/05/2026 — {dias}d {horas}h {mins}m &nbsp;|&nbsp; 📍 Maringá, PR
+    </span>
+</div>
+""", unsafe_allow_html=True)    
+
 st.caption("Dados: InfoDengue (Fiocruz) | Stack: Python · dbt · MLflow · FastAPI · Streamlit · Docker · Airflow · Kafka · RAG · LLM")
