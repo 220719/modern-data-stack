@@ -691,6 +691,182 @@ if st.button("🔍 Perguntar", type="primary") and pergunta:
 
 st.markdown("---")
 
+# ── DOWNLOAD E RELATÓRIO ─────────────────────────────────
+st.markdown("---")
+st.subheader("📥 Exportar Dados e Relatórios")
+
+col_d1, col_d2 = st.columns(2)
+
+with col_d1:
+    st.markdown("**📊 Download de Dados**")
+    st.markdown("Baixe os dados epidemiológicos filtrados em CSV.")
+
+    if not df_atual.empty:
+        # Download situação atual
+        csv_atual = df_atual.to_csv(index=False).encode("utf-8")
+        st.download_button(
+            label=f"⬇️ Baixar dados — {doenca_sel.capitalize()} {ano_sel}",
+            data=csv_atual,
+            file_name=f"arboviroses_{doenca_sel}_{ano_sel}.csv",
+            mime="text/csv",
+            use_container_width=True,
+        )
+
+    if not df_hist.empty:
+        # Download histórico do município
+        colunas = ["SE", "casos_estimados", "nivel_alerta"]
+        colunas_disp = [c for c in colunas if c in df_hist.columns]
+        csv_hist = df_hist[colunas_disp].to_csv(index=False).encode("utf-8")
+        st.download_button(
+            label=f"⬇️ Baixar histórico — {municipio_sel} / {doenca_sel.capitalize()}",
+            data=csv_hist,
+            file_name=f"historico_{municipio_sel}_{doenca_sel}.csv",
+            mime="text/csv",
+            use_container_width=True,
+        )
+
+with col_d2:
+    st.markdown("**📋 Relatório Epidemiológico**")
+    st.markdown("Gera um relatório completo com análise, tendências e recomendações.")
+
+    if st.button("📋 Gerar Relatório PDF", type="primary", use_container_width=True):
+        with st.spinner("🤖 Gerando relatório com IA..."):
+            try:
+                # Monta contexto rico
+                if not df_atual.empty:
+                    top5 = df_atual.sort_values("casos_estimados", ascending=False).head(5)
+                    em_ep = df_atual[df_atual["nivel_alerta"] == 4]["municipio"].tolist()
+                    em_al = df_atual[df_atual["nivel_alerta"] == 3]["municipio"].tolist()
+
+                    contexto_relatorio = f"""
+Relatório de {doenca_sel.capitalize()} — {ano_sel}
+Data: {datetime.now(brasilia).strftime("%d/%m/%Y às %H:%M")}
+
+SITUAÇÃO ATUAL:
+- Total de casos na última semana: {int(df_atual['casos_estimados'].sum()):,}
+- Municípios em epidemia (nível 4): {', '.join(em_ep) if em_ep else 'Nenhum'}
+- Municípios em alerta alto (nível 3): {', '.join(em_al) if em_al else 'Nenhum'}
+- Município mais afetado: {top5.iloc[0]['municipio']} ({int(top5.iloc[0]['casos_estimados']):,} casos)
+
+TOP 5 MUNICÍPIOS:
+{chr(10).join([f"- {r['municipio']}: {int(r['casos_estimados']):,} casos, nível {int(r['nivel_alerta'])}" for _, r in top5.iterrows()])}
+                    """
+
+                    prompt_relatorio = f"""
+Você é um especialista em saúde pública brasileira. Com base nos dados abaixo, 
+gere um relatório epidemiológico completo e profissional em português com:
+
+1. SUMÁRIO EXECUTIVO (2-3 parágrafos)
+2. SITUAÇÃO EPIDEMIOLÓGICA ATUAL
+3. ANÁLISE DE TENDÊNCIAS
+4. MUNICÍPIOS EM SITUAÇÃO CRÍTICA
+5. RECOMENDAÇÕES PARA GESTORES DE SAÚDE
+6. CONSIDERAÇÕES FINAIS
+
+Dados:
+{contexto_relatorio}
+
+O relatório deve ser técnico, objetivo e útil para gestores de saúde pública.
+"""
+                    groq_key = st.secrets.get("GROQ_API_KEY", "")
+                    from langchain_groq import ChatGroq
+                    from langchain_core.prompts import ChatPromptTemplate
+                    from langchain_core.output_parsers import StrOutputParser
+
+                    llm = ChatGroq(
+                        model="llama-3.3-70b-versatile",
+                        api_key=groq_key,
+                        temperature=0.2,
+                    )
+                    chain = ChatPromptTemplate.from_template("{text}") | llm | StrOutputParser()
+                    texto_relatorio = chain.invoke({"text": prompt_relatorio})
+
+                    # Gera PDF
+                    from reportlab.lib.pagesizes import A4
+                    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+                    from reportlab.lib.units import cm
+                    from reportlab.lib import colors
+                    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, HRFlowable
+                    from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
+                    import io
+
+                    buffer = io.BytesIO()
+                    doc = SimpleDocTemplate(
+                        buffer,
+                        pagesize=A4,
+                        rightMargin=2*cm,
+                        leftMargin=2*cm,
+                        topMargin=2*cm,
+                        bottomMargin=2*cm,
+                    )
+
+                    styles = getSampleStyleSheet()
+                    style_title = ParagraphStyle(
+                        "title",
+                        parent=styles["Title"],
+                        fontSize=18,
+                        textColor=colors.HexColor("#d35400"),
+                        spaceAfter=6,
+                        alignment=TA_CENTER,
+                    )
+                    style_subtitle = ParagraphStyle(
+                        "subtitle",
+                        parent=styles["Normal"],
+                        fontSize=11,
+                        textColor=colors.HexColor("#7f8c8d"),
+                        spaceAfter=12,
+                        alignment=TA_CENTER,
+                    )
+                    style_body = ParagraphStyle(
+                        "body",
+                        parent=styles["Normal"],
+                        fontSize=10,
+                        leading=14,
+                        spaceAfter=8,
+                        alignment=TA_JUSTIFY,
+                    )
+
+                    story = []
+                    story.append(Paragraph("🦟 Observatório Nacional de Arboviroses", style_title))
+                    story.append(Paragraph(
+                        f"Relatório Epidemiológico — {doenca_sel.capitalize()} {ano_sel}",
+                        style_subtitle
+                    ))
+                    story.append(Paragraph(
+                        f"Gerado em: {datetime.now(brasilia).strftime('%d/%m/%Y às %H:%M')} | Maringá, Paraná",
+                        style_subtitle
+                    ))
+                    story.append(HRFlowable(width="100%", thickness=2, color=colors.HexColor("#e67e22")))
+                    story.append(Spacer(1, 0.5*cm))
+
+                    for linha in texto_relatorio.split("\n"):
+                        if linha.strip():
+                            story.append(Paragraph(linha.strip(), style_body))
+                            story.append(Spacer(1, 0.2*cm))
+
+                    story.append(Spacer(1, 0.5*cm))
+                    story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#bdc3c7")))
+                    story.append(Spacer(1, 0.3*cm))
+                    story.append(Paragraph(
+                        "Fonte: InfoDengue (Fiocruz) | Gerado por IA (Llama 3 via Groq) | Para fins de pesquisa científica",
+                        style_subtitle
+                    ))
+
+                    doc.build(story)
+                    buffer.seek(0)
+
+                    st.success("✅ Relatório gerado com sucesso!")
+                    st.download_button(
+                        label="⬇️ Baixar Relatório PDF",
+                        data=buffer.getvalue(),
+                        file_name=f"relatorio_epidemiologico_{doenca_sel}_{ano_sel}.pdf",
+                        mime="application/pdf",
+                        use_container_width=True,
+                    )
+
+            except Exception as e:
+                st.error(f"Erro ao gerar relatório: {e}")
+
 # ── SOBRE O AUTOR ─────────────────────────────────────────
 st.markdown("---")
 col_a1, col_a2 = st.columns([1, 3])
